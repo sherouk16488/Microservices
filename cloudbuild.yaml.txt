@@ -1,0 +1,41 @@
+# cloudbuild.yaml (in your project's root folder)
+
+substitutions:
+  _SERVICE_NAME: python-web-app                    # ⬅️ Chosen name
+  _REGION: us-west1                                # ⬅️ Confirmed from your screenshot
+  _AR_REPO: my-app-repo                            # ⬅️ Confirmed from your screenshot
+
+steps:
+# 1. Build the Docker Image
+- name: 'gcr.io/cloud-builders/docker'
+  id: Build
+  args:
+    - 'build'
+    - '-t'
+    - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_AR_REPO}/${_SERVICE_NAME}:${COMMIT_SHA}'
+    - '.' 
+
+# 2. Push the built image to Google Artifact Registry
+- name: 'gcr.io/cloud-builders/docker'
+  id: Push
+  args:
+    - 'push'
+    - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_AR_REPO}/${_SERVICE_NAME}:${COMMIT_SHA}'
+
+# 3. Deploy the new image revision to Cloud Run
+- name: 'gcr.io/google.com/cloudsdk/cloud-sdk'
+  id: Deploy
+  args:
+    - gcloud
+    - run
+    - deploy
+    - ${_SERVICE_NAME}
+    - --image=${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_AR_REPO}/${_SERVICE_NAME}:${COMMIT_SHA}
+    - --region=${_REGION}
+    - --platform=managed
+    - --allow-unauthenticated # Allows public access. Remove for private services.
+    - --project=${PROJECT_ID}
+  waitFor: ['Push'] 
+
+images:
+- '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_AR_REPO}/${_SERVICE_NAME}:${COMMIT_SHA}'
