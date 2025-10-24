@@ -2,20 +2,18 @@ substitutions:
   _SERVICE_NAME: python-web-app
   _REGION: us-west1
   _AR_REPO: gke-repo
-  
+
 steps:
 # 1. Build the Docker Image
-# This forces the build to use the repository root ('.') for context 
-# and explicitly defines the Dockerfile location (Microservices/Dockerfile).
+# Both the Dockerfile and the build context are inside the Microservices folder
 - name: 'gcr.io/cloud-builders/docker'
   id: Build
   args:
     - 'build'
     - '-t'
     - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_AR_REPO}/${_SERVICE_NAME}:${COMMIT_SHA}'
-    # CRITICAL FIX: Explicitly specify the path to the Dockerfile
-    - '--file=Microservices/Dockerfile' 
-    - '.' # The build context is the repository root (where the Microservices folder is located)
+    - '--file=Microservices/Dockerfile'
+    - 'Microservices'  # Build context points to the Microservices folder
 
 # 2. Push the built image to Google Artifact Registry
 - name: 'gcr.io/cloud-builders/docker'
@@ -24,7 +22,7 @@ steps:
     - 'push'
     - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_AR_REPO}/${_SERVICE_NAME}:${COMMIT_SHA}'
 
-# 3. Deploy the new image revision to Cloud Run
+# 3. Deploy the new image to Cloud Run
 - name: 'gcr.io/google.com/cloudsdk/cloud-sdk'
   id: Deploy
   args:
@@ -38,8 +36,9 @@ steps:
     - --allow-unauthenticated
     - --project=${PROJECT_ID}
   waitFor: ['Push']
-  
+
 images:
 - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_AR_REPO}/${_SERVICE_NAME}:${COMMIT_SHA}'
+
 options:
   logging: CLOUD_LOGGING_ONLY
