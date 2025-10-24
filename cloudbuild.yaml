@@ -42,5 +42,4 @@ images:
 <<<<<<< HEAD:cloudbuild.yaml.txt
 options:
   logging: CLOUD_LOGGING_ONLY
-=======
->>>>>>> 273435cdc4d0964a22640c2eec3fcedf69979720:cloudbuild.yaml
+
