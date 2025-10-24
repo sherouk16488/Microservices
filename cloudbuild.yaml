@@ -1,19 +1,20 @@
 substitutions:
-  _SERVICE_NAME: python-web-app                      # Chosen service name
-  _REGION: us-west1                                  # Confirmed region
-  _AR_REPO: gke-repo                                 # Artifact Registry repo name
+  _SERVICE_NAME: python-web-app
+  _REGION: us-west1
+  _AR_REPO: gke-repo
   
 steps:
 # 1. Build the Docker Image
-# CRITICAL FIX: The final argument is now './Microservices', which explicitly tells
-# the Docker builder to use this folder as the build context.
+# CRITICAL FIX: We set the build context to the root ('.') and explicitly tell
+# the builder the location of the Dockerfile using --file.
 - name: 'gcr.io/cloud-builders/docker'
   id: Build
   args:
     - 'build'
+    - '--file=Microservices/Dockerfile' # <--- EXPLICITLY POINTS TO THE DOCKERFILE
     - '-t'
     - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_AR_REPO}/${_SERVICE_NAME}:${COMMIT_SHA}'
-    - 'Microservices' # <--- EXPLICIT PATH: Solves the 'no such file or directory' error
+    - '.' # <--- Build context is now the repository root (workspace)
 
 # 2. Push the built image to Google Artifact Registry
 - name: 'gcr.io/cloud-builders/docker'
