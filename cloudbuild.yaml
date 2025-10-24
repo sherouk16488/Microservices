@@ -5,16 +5,17 @@ substitutions:
   
 steps:
 # 1. Build the Docker Image
-# CRITICAL FIX: We set the build context to the root ('.') and explicitly tell
-# the builder the location of the Dockerfile using --file.
+# This forces the build to use the repository root ('.') for context 
+# and explicitly defines the Dockerfile location (Microservices/Dockerfile).
 - name: 'gcr.io/cloud-builders/docker'
   id: Build
   args:
     - 'build'
-    - '--file=Microservices/Dockerfile' # <--- EXPLICITLY POINTS TO THE DOCKERFILE
     - '-t'
     - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_AR_REPO}/${_SERVICE_NAME}:${COMMIT_SHA}'
-    - '.' # <--- Build context is now the repository root (workspace)
+    # CRITICAL FIX: Explicitly specify the path to the Dockerfile
+    - '--file=Microservices/Dockerfile' 
+    - '.' # The build context is the repository root (where the Microservices folder is located)
 
 # 2. Push the built image to Google Artifact Registry
 - name: 'gcr.io/cloud-builders/docker'
