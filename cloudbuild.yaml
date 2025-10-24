@@ -10,7 +10,7 @@ steps:
   args:
     - 'build'
     - '-t'
-    - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_AR_REPO}/${_SERVICE_NAME}:${COMMIT_SHA}'
+    - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_AR_REPO}/${_SERVICE_NAME}:${COMMIT_SHA:-latest}'
     - '--file=Dockerfile'
     - '.'  # 👈 use current directory as context
 
@@ -19,7 +19,7 @@ steps:
   id: Push
   args:
     - 'push'
-    - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_AR_REPO}/${_SERVICE_NAME}:${COMMIT_SHA}'
+    - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_AR_REPO}/${_SERVICE_NAME}:${COMMIT_SHA:-latest}'
 
 # 3. Deploy to Cloud Run
 - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:latest'
@@ -29,7 +29,7 @@ steps:
     - run
     - deploy
     - ${_SERVICE_NAME}
-    - --image=${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_AR_REPO}/${_SERVICE_NAME}:${COMMIT_SHA}
+    - --image=${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_AR_REPO}/${_SERVICE_NAME}:${COMMIT_SHA:-latest}
     - --region=${_REGION}
     - --platform=managed
     - --allow-unauthenticated
@@ -37,7 +37,7 @@ steps:
   waitFor: ['Push']
 
 images:
-- '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_AR_REPO}/${_SERVICE_NAME}:${COMMIT_SHA}'
+- '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_AR_REPO}/${_SERVICE_NAME}:${COMMIT_SHA:-latest}'
 
 options:
   logging: CLOUD_LOGGING_ONLY
