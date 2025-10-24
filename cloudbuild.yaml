@@ -5,15 +5,15 @@ substitutions:
   
 steps:
 # 1. Build the Docker Image
-# The '.' here assumes the build is running inside the Microservices directory,
-# as set in the Cloud Build trigger settings.
+# CRITICAL FIX: The final argument is now './Microservices', which explicitly tells
+# the Docker builder to use this folder as the build context.
 - name: 'gcr.io/cloud-builders/docker'
   id: Build
   args:
     - 'build'
     - '-t'
     - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_AR_REPO}/${_SERVICE_NAME}:${COMMIT_SHA}'
-    - '.' # This now correctly refers to the 'Microservices' directory
+    - './Microservices' # <--- EXPLICIT PATH: Solves the 'no such file or directory' error
 
 # 2. Push the built image to Google Artifact Registry
 - name: 'gcr.io/cloud-builders/docker'
