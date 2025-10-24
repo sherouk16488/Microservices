@@ -22,10 +22,9 @@ steps:
     - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_AR_REPO}/${_SERVICE_NAME}:${COMMIT_SHA:-latest}'
 
 # 3. Deploy to Cloud Run
-- name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:latest'
+- name: ''gcr.io/cloud-builders/gcloud'
   id: Deploy
   args:
-    - gcloud
     - run
     - deploy
     - ${_SERVICE_NAME}
