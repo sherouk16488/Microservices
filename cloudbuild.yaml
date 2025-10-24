@@ -1,18 +1,19 @@
 substitutions:
-  _SERVICE_NAME: python-web-app                      # ⬅️ Chosen name
-  _REGION: us-west1                                  # ⬅️ Confirmed from your screenshot
-  _AR_REPO: gke-repo                                 # ⬅️ Corrected Artifact Registry repo name from your screenshots
+  _SERVICE_NAME: python-web-app                      # Chosen service name
+  _REGION: us-west1                                  # Confirmed region
+  _AR_REPO: gke-repo                                 # Artifact Registry repo name
   
 steps:
 # 1. Build the Docker Image
+# The '.' here assumes the build is running inside the Microservices directory,
+# as set in the Cloud Build trigger settings.
 - name: 'gcr.io/cloud-builders/docker'
   id: Build
-  dir: 'Microservices' # <--- CRITICAL FIX: Changes the working directory for this step
   args:
     - 'build'
     - '-t'
     - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_AR_REPO}/${_SERVICE_NAME}:${COMMIT_SHA}'
-    - '.'  # Now correctly points to the 'Microservices' folder where the Dockerfile is located
+    - '.' # This now correctly refers to the 'Microservices' directory
 
 # 2. Push the built image to Google Artifact Registry
 - name: 'gcr.io/cloud-builders/docker'
@@ -24,7 +25,6 @@ steps:
 # 3. Deploy the new image revision to Cloud Run
 - name: 'gcr.io/google.com/cloudsdk/cloud-sdk'
   id: Deploy
-  dir: 'Microservices' # <--- ADDED: Ensures any context needed for gcloud deploy is found
   args:
     - gcloud
     - run
@@ -33,7 +33,7 @@ steps:
     - --image=${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_AR_REPO}/${_SERVICE_NAME}:${COMMIT_SHA}
     - --region=${_REGION}
     - --platform=managed
-    - --allow-unauthenticated # Allows public access. Remove for private services.
+    - --allow-unauthenticated
     - --project=${PROJECT_ID}
   waitFor: ['Push']
   
