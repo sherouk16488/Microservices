@@ -2,6 +2,9 @@ substitutions:
   _SERVICE_NAME: python-web-app
   _REGION: us-west1
   _AR_REPO: gke-repo
+  # 🔑 FIX: Add a custom tag variable. 
+  # This default will be used for manual runs if nothing else is provided.
+  _TAG: 'latest' 
 
 steps:
 # 1. Build the Docker image
@@ -10,16 +13,19 @@ steps:
   args:
     - 'build'
     - '-t'
-    - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_AR_REPO}/${_SERVICE_NAME}:${COMMIT_SHA:-latest}'
+    # ❌ OLD: ${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_AR_REPO}/${_SERVICE_NAME}:${COMMIT_SHA:-latest}
+    # ✅ NEW: Use the simple _TAG variable
+    - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_AR_REPO}/${_SERVICE_NAME}:${_TAG}'
     - '--file=Dockerfile'
-    - '.'  # 👈 use current directory as context
+    - '.'
 
 # 2. Push the image to Artifact Registry
 - name: 'gcr.io/cloud-builders/docker'
   id: Push
   args:
     - 'push'
-    - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_AR_REPO}/${_SERVICE_NAME}:${COMMIT_SHA:-latest}'
+    # ✅ NEW: Use the simple _TAG variable
+    - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_AR_REPO}/${_SERVICE_NAME}:${_TAG}'
 
 # 3. Deploy to Cloud Run
 - name: 'gcr.io/cloud-builders/gcloud'
@@ -28,7 +34,8 @@ steps:
     - run
     - deploy
     - ${_SERVICE_NAME}
-    - --image=${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_AR_REPO}/${_SERVICE_NAME}:${COMMIT_SHA:-latest}
+    # ✅ NEW: Use the simple _TAG variable
+    - --image=${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_AR_REPO}/${_SERVICE_NAME}:${_TAG}
     - --region=${_REGION}
     - --platform=managed
     - --allow-unauthenticated
@@ -36,7 +43,8 @@ steps:
   waitFor: ['Push']
 
 images:
-- '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_AR_REPO}/${_SERVICE_NAME}:${COMMIT_SHA:-latest}'
+# ✅ NEW: Use the simple _TAG variable
+- '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_AR_REPO}/${_SERVICE_NAME}:${_TAG}'
 
 options:
   logging: CLOUD_LOGGING_ONLY
