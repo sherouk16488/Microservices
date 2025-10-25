@@ -2,9 +2,9 @@ substitutions:
   _SERVICE_NAME: python-web-app
   _REGION: us-west1
   _AR_REPO: gke-repo
-  # 🔑 FIX: Add a custom tag variable. 
-  # This default will be used for manual runs if nothing else is provided.
   _TAG: 'latest' 
+  # 🔑 FIX: ADD THE DATABASE URL SUBSTITUTION
+  _DB_URL: 'REPLACE_WITH_ACTUAL_DB_URL' 
 
 steps:
 # 1. Build the Docker image
@@ -13,8 +13,6 @@ steps:
   args:
     - 'build'
     - '-t'
-    # ❌ OLD: ${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_AR_REPO}/${_SERVICE_NAME}:${COMMIT_SHA:-latest}
-    # ✅ NEW: Use the simple _TAG variable
     - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_AR_REPO}/${_SERVICE_NAME}:${_TAG}'
     - '--file=Dockerfile'
     - '.'
@@ -24,7 +22,6 @@ steps:
   id: Push
   args:
     - 'push'
-    # ✅ NEW: Use the simple _TAG variable
     - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_AR_REPO}/${_SERVICE_NAME}:${_TAG}'
 
 # 3. Deploy to Cloud Run
@@ -34,16 +31,16 @@ steps:
     - run
     - deploy
     - ${_SERVICE_NAME}
-    # ✅ NEW: Use the simple _TAG variable
     - --image=${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_AR_REPO}/${_SERVICE_NAME}:${_TAG}
     - --region=${_REGION}
     - --platform=managed
     - --allow-unauthenticated
     - --project=${PROJECT_ID}
+    # 🚨 FIX: PASS THE ENVIRONMENT VARIABLE TO CLOUD RUN
+    - --set-env-vars=DATABASE_URL=${_DB_URL} 
   waitFor: ['Push']
 
 images:
-# ✅ NEW: Use the simple _TAG variable
 - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_AR_REPO}/${_SERVICE_NAME}:${_TAG}'
 
 options:
