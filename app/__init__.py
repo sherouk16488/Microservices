@@ -1,4 +1,3 @@
-
 from flask import Flask
 from app.routes.user_routes import user_blueprint
 from app.routes.product_routes import product_blueprint
